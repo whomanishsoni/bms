@@ -35,13 +35,7 @@ class LoginController extends BaseController
     public function login(LoginRequest $request)
     {
         // Log admin login attempts
-        \Log::info('Admin Login Attempt', [
-            'username' => $request->input('username'),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'timestamp' => now()->toISOString(),
-            'message' => 'User attempted to login to admin panel'
-        ]);
+        \Log::info('Admin Login Attempt: ' . $request->input('username') . ' attempted to login to admin panel');
 
         $request->merge([$this->username() => $request->input('username')]);
 
