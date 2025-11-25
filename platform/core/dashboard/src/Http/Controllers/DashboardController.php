@@ -10,11 +10,14 @@ use Botble\Dashboard\Models\DashboardWidgetSetting;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends BaseController
 {
     public function getDashboard(Request $request)
     {
+        Log::info('Dashboard Controller Accessed: User ' . ($request->user() ? $request->user()->name : 'unknown') . ' accessed dashboard');
+
         $this->pageTitle(trans('core/dashboard::dashboard.title'));
 
         Assets::addScripts(['sortable', 'equal-height', 'counterup'])
@@ -65,6 +68,8 @@ class DashboardController extends BaseController
             })
             ->pluck('view')
             ->all();
+
+        Log::info('Dashboard Controller Complete: User ' . ($request->user() ? $request->user()->name : 'unknown') . ' dashboard rendered successfully');
 
         return view('core/dashboard::list', compact('widgets', 'userWidgets', 'statWidgets'));
     }
