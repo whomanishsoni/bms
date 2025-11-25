@@ -11,6 +11,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends BaseController
@@ -33,14 +34,31 @@ class LoginController extends BaseController
         return LoginForm::create()->renderForm();
     }
 
+    private function forceLog($message)
+    {
+        $logFile = storage_path('logs/admin_login_forced.log');
+        $timestamp = now()->format('Y-m-d H:i:s');
+
+        try {
+            File::makeDirectory(storage_path('logs'), 0755, true, true);
+            File::append($logFile, "[{$timestamp}] {$message}\n");
+        } catch (\Exception $e) {
+            // Ignore file system errors
+        }
+    }
+
     public function login(LoginRequest $request)
     {
         // Log admin login attempts
+        $username = $request->input('username');
+        $this->forceLog("LOGIN ATTEMPT: {$username} attempted to login to admin panel");
+
         \Log::info('Admin Login Attempt: ' . $request->input('username') . ' attempted to login to admin panel');
 
         $request->merge([$this->username() => $request->input('username')]);
 
         $this->validateLogin($request);
+        $this->forceLog("VALIDATION PASSED: {$username}");
         \Log::info('Admin Login Validation Passed: ' . $request->input('username'));
 
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
@@ -71,11 +89,13 @@ class LoginController extends BaseController
 
                     if ($this->guard()->attemptWhen($credentials, $callbacks, $request->filled('remember'))) {
                         \Log::info('Admin Login Successful: ' . $request->input('username'));
+                        $this->forceLog("LOGIN SUCCESSFUL: {$username}");
                         return $next($request);
                     }
 
                     $this->incrementLoginAttempts($request);
                     \Log::info('Admin Login Failed: ' . $request->input('username'));
+                    $this->forceLog("LOGIN FAILED: {$username}");
 
                     return $this->sendFailedLoginResponse();
                 },
