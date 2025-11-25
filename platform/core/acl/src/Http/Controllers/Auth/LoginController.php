@@ -88,14 +88,16 @@ class LoginController extends BaseController
                     ]);
 
                     if ($this->guard()->attemptWhen($credentials, $callbacks, $request->filled('remember'))) {
-                        \Log::info('Admin Login Successful: ' . $request->input('username'));
-                        $this->forceLog("LOGIN SUCCESSFUL: {$username}");
+                        $successUsername = $request->input('username');
+                        \Log::info('Admin Login Successful: ' . $successUsername);
+                        $this->forceLog("LOGIN SUCCESSFUL: {$successUsername}");
                         return $next($request);
                     }
 
+                    $failedUsername = $request->input('username');
                     $this->incrementLoginAttempts($request);
-                    \Log::info('Admin Login Failed: ' . $request->input('username'));
-                    $this->forceLog("LOGIN FAILED: {$username}");
+                    \Log::info('Admin Login Failed: ' . $failedUsername);
+                    $this->forceLog("LOGIN FAILED: {$failedUsername}");
 
                     return $this->sendFailedLoginResponse();
                 },

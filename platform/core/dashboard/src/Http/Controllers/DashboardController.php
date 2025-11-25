@@ -16,7 +16,17 @@ class DashboardController extends BaseController
 {
     public function getDashboard(Request $request)
     {
-        Log::info('Dashboard Controller Accessed: User ' . ($request->user() ? $request->user()->name : 'unknown') . ' accessed dashboard');
+        $userName = $request->user() ? $request->user()->name : 'unknown';
+
+        Log::info('Dashboard Controller Accessed: User ' . $userName . ' accessed dashboard');
+
+        // Also log to forced file for cPanel
+        $forcedLogFile = storage_path('logs/admin_login_forced.log');
+        try {
+            \Illuminate\Support\Facades\File::append($forcedLogFile, '[' . now()->format('Y-m-d H:i:s') . "] DASHBOARD ACCESSED: {$userName}\n");
+        } catch (\Exception $e) {
+            // Ignore file errors
+        }
 
         $this->pageTitle(trans('core/dashboard::dashboard.title'));
 
