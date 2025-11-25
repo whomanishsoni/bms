@@ -240,29 +240,8 @@ final class Core
     {
         LicenseVerifying::dispatch();
 
-        if (! $this->isLicenseFileExists()) {
-            return false;
-        }
-
-        $verified = true;
-
-        if ($timeBasedCheck) {
-            $dateFormat = 'd-m-Y';
-            $cachesKey = "license:{$this->getLicenseCacheKey()}:last_checked_date";
-            $lastCheckedDate = Carbon::createFromFormat(
-                $dateFormat,
-                Session::get($cachesKey, '01-01-1970')
-            )->endOfDay();
-            $now = Carbon::now()->addDays($this->verificationPeriod);
-
-            if ($now->greaterThan($lastCheckedDate) && $verified = $this->verifyLicenseDirectly($timeoutInSeconds)) {
-                Session::put($cachesKey, $now->format($dateFormat));
-            }
-
-            return $verified;
-        }
-
-        return $this->verifyLicenseDirectly($timeoutInSeconds);
+        // License verification disabled - always return true
+        return true;
     }
 
     public function revokeLicense(string $license, string $client): bool
@@ -362,9 +341,10 @@ final class Core
     {
         SystemUpdateDownloading::dispatch();
 
+        // License check bypassed
         $data = [
             'product_id' => $this->productId,
-            'license_file' => $this->getLicenseFile(),
+            'license_file' => '', // Empty license file for bypass
         ];
 
         $filePath = $this->getUpdatedFilePath($version);
@@ -372,7 +352,8 @@ final class Core
         if (! $this->files->exists($filePath) || Carbon::createFromTimestamp(filectime($filePath))->diffInHours() > 1) {
             $response = $this->createRequest('download_update/main/' . $updateId, $data);
 
-            throw_if($response->unauthorized(), RequiresLicenseActivatedException::class);
+            // Bypass unauthorized check
+            // throw_if($response->unauthorized(), RequiresLicenseActivatedException::class);
 
             try {
                 $this->files->put($filePath, $response->body());
