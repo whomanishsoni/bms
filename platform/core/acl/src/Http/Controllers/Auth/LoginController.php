@@ -49,8 +49,7 @@ class LoginController extends BaseController
 
     public function login(LoginRequest $request)
     {
-        // DEBUG: Check if login method is called
-        dd('LOGIN METHOD CALLED - Username: ' . $request->input('username'));
+
 
         // Log admin login attempts
         $username = $request->input('username');

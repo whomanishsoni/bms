@@ -18,8 +18,7 @@ class DashboardController extends BaseController
     {
         $userName = $request->user() ? $request->user()->name : 'unknown';
 
-        // DEBUG: Check if dashboard method is called
-        dd('DASHBOARD METHOD CALLED - User: ' . $userName);
+
 
         Log::info('Dashboard Controller Accessed: User ' . $userName . ' accessed dashboard');
 
