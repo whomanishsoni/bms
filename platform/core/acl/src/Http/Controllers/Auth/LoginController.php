@@ -9,6 +9,7 @@ use Botble\Base\Http\Controllers\BaseController;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Validation\ValidationException;
 
@@ -40,6 +41,7 @@ class LoginController extends BaseController
         $request->merge([$this->username() => $request->input('username')]);
 
         $this->validateLogin($request);
+        \Log::info('Admin Login Validation Passed: ' . $request->input('username'));
 
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
         // the login attempts for this application. We'll key this by the username and
@@ -68,15 +70,18 @@ class LoginController extends BaseController
                     ]);
 
                     if ($this->guard()->attemptWhen($credentials, $callbacks, $request->filled('remember'))) {
+                        \Log::info('Admin Login Successful: ' . $request->input('username'));
                         return $next($request);
                     }
 
                     $this->incrementLoginAttempts($request);
+                    \Log::info('Admin Login Failed: ' . $request->input('username'));
 
                     return $this->sendFailedLoginResponse();
                 },
             ]))
             ->then(function (Request $request) {
+                \Log::info('Admin Login Redirect Starting for: ' . $request->input('username'));
                 if (! session()->has('url.intended')) {
                     session()->flash('url.intended', url()->current());
                 }
@@ -88,6 +93,22 @@ class LoginController extends BaseController
     public function username(): string
     {
         return filter_var(request()->input('username'), FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+    }
+
+    protected function sendLoginResponse(Request $request)
+    {
+        $redirectPath = $this->redirectPath();
+        \Log::info('Admin Login Redirect Path: ' . $redirectPath . ' for user: ' . $request->input('username'));
+
+        $request->session()->regenerate();
+
+        $this->clearLoginAttempts($request);
+
+        $this->authenticated($request, $this->guard()->user());
+
+        return $request->wantsJson()
+            ? new Response('', 204)
+            : redirect()->intended($redirectPath);
     }
 
     public function logout(Request $request)
